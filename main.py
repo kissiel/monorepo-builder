@@ -1,3 +1,9 @@
+"""
+git-filter-repo is directly taken from the upstream repo,
+commit d760d24cf74a0ee68134d4b83a43d1e8ea3b6e1c
+The upstream license as of time of that commit is MIT
+"""
+
 import random
 import os
 import shutil
@@ -7,6 +13,8 @@ import tempfile
 
 from functools import partial
 from multiprocessing import Pool, cpu_count
+
+from git_filter_repo import FilteringOptions, RepoFilter
 
 
 
@@ -26,40 +34,12 @@ TARGET_REPO = '/home/kissiel/checkbox'
 run = partial(subprocess.run, shell=True)
 
 def filter_branch_to_subdir(subdir, path):
-
-
-    # if the repo has a file/dir with the same name as the target dir
-    # we need to create an intermediate step
-    if os.path.exists(os.path.join(path, subdir)):
-        # generate a 10-char random string
-        intermediate_dir = ''.join([random.choice(string.ascii_letters) for _ in range(10)])
-        # TODO: there's a 1/10000000 chance that the check if this dir doesn't exist...
-        cmd = (
-            f"git -C \"{path}\" filter-branch -f --prune-empty --tree-filter '"
-            f"mkdir -p \"{intermediate_dir}\"; "
-            f"git ls-tree --name-only $GIT_COMMIT "
-            f"| xargs -I{{}} mv {{}} \"{intermediate_dir}\"'"
-        )
-        run(cmd)
-        cmd = (
-            f"git -C \"{path}\" filter-branch -f --prune-empty --tree-filter '"
-            f"mkdir -p \"{subdir}\"; "
-            f"git ls-tree --name-only $GIT_COMMIT "
-            f"| xargs -I{intermediate_dir}/{{}} mv {intermediate_dir}/{{}} \"{subdir}\"'"
-        )
-        return run(cmd)
-
-    # git -C <path> SUBCMD makes git run as someone would do:
-    # cd <path>; git SUBCMD
-    cmd = (
-        f"git -C \"{path}\" filter-branch -f --prune-empty --tree-filter '"
-        f"mkdir -p \"{subdir}\"; "
-        f"git ls-tree --name-only $GIT_COMMIT "
-        f"| xargs -I{{}} mv {{}} \"{subdir}\"'"
-    )
-    print(cmd)
-    return run(cmd)
-
+    args = [
+        '--source', path,
+        '--target', path,
+        '--to-subdirectory-filter', subdir,
+    ]
+    RepoFilter(FilteringOptions.parse_args(args)).run()
 
 def main():
 
