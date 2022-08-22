@@ -33,7 +33,7 @@ def filter_branch_to_subdir(subdir, path):
     if os.path.exists(os.path.join(path, subdir)):
         # generate a 10-char random string
         intermediate_dir = ''.join([random.choice(string.ascii_letters) for _ in range(10)])
-        # TODO: check if this dir doesn't exist...
+        # TODO: there's a 1/10000000 chance that the check if this dir doesn't exist...
         cmd = (
             f"git -C \"{path}\" filter-branch -f --prune-empty --tree-filter '"
             f"mkdir -p \"{intermediate_dir}\"; "
@@ -98,28 +98,7 @@ def main():
             run(f"git merge {merge_opts} {target}/{branch}")
             run(f"git remote rm {target}")
         print(f"{target_dir}")
-    return
 
-    for target, source, branch in REPOS:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            run(f"git clone {source} {tmp_dir}")
-            filter_branch_to_subdir(target, subdir)
-
-
-            os.chdir(tmp_dir)
-            cmd = (
-                f"git filter-branch -f --prune-empty --tree-filter '"
-                f"mkdir -p \"{target}\"; "
-                f"git ls-tree --name-only $GIT_COMMIT "
-                f"| xargs -I{{}} mv {{}} \"{target}\"'"
-            )
-            run(cmd)
-            os.chdir(TARGET_REPO)
-            run(f"git remote add {target} {tmp_dir}")
-            run(f"git fetch {target}")
-            merge_opts = "--allow-unrelated-histories --no-edit"
-            run(f"git merge {merge_opts} {target}/{branch}")
-            run(f"git remote rm {target}")
     
 if __name__ == '__main__':
     main()
