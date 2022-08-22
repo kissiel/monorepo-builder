@@ -17,29 +17,45 @@ from multiprocessing import Pool, cpu_count
 from git_filter_repo import FilteringOptions, RepoFilter
 
 
-
 # the repos to be merged into monorepo are defined as a triple that contains:
 # TARGET_SUBDIR_NAME, ORIGINAL_REPO_URI, BRANCH_TO_BE_USED_FROM_ORIGINAL_REPO
 
 REPOS = [
-    ('metabox', '/home/kissiel/mono-repos/metabox', 'main'),
-    ('checkbox-ng', '/home/kissiel/mono-repos/checkbox-ng', 'master'),
-    ('checkbox-support', '/home/kissiel/mono-repos/checkbox-support', 'master'),
-    ('plainbox-provider-checkbox', '/home/kissiel/mono-repos/plainbox-provider-checkbox', 'master'),
-    ('plainbox-provider-resource', '/home/kissiel/mono-repos/plainbox-provider-resource', 'master'),
+    ("metabox", "/home/kissiel/mono-repos/metabox", "main"),
+    ("checkbox-ng", "/home/kissiel/mono-repos/checkbox-ng", "master"),
+    (
+        "checkbox-support",
+        "/home/kissiel/mono-repos/checkbox-support",
+        "master",
+    ),
+    (
+        "plainbox-provider-checkbox",
+        "/home/kissiel/mono-repos/plainbox-provider-checkbox",
+        "master",
+    ),
+    (
+        "plainbox-provider-resource",
+        "/home/kissiel/mono-repos/plainbox-provider-resource",
+        "master",
+    ),
 ]
 
-TARGET_REPO = '/home/kissiel/checkbox'
+TARGET_REPO = "/home/kissiel/checkbox"
 
 run = partial(subprocess.run, shell=True)
 
+
 def filter_branch_to_subdir(subdir, path):
     args = [
-        '--source', path,
-        '--target', path,
-        '--to-subdirectory-filter', subdir,
+        "--source",
+        path,
+        "--target",
+        path,
+        "--to-subdirectory-filter",
+        subdir,
     ]
     RepoFilter(FilteringOptions.parse_args(args)).run()
+
 
 def main():
 
@@ -62,8 +78,13 @@ def main():
             print(f"Cloning {source} into {target_dir}")
             run(f"git clone {source} {target_dir}")
             print(f"Moving all of the files to their respective subdirs")
-            # let's remember the target dir as an arg for the next parallel bit 
-            intermediate_dirs.append((target, target_dir, ))
+            # let's remember the target dir as an arg for the next parallel bit
+            intermediate_dirs.append(
+                (
+                    target,
+                    target_dir,
+                )
+            )
             # we need to rebake the args for each call to filter_branch so it's
             # easier to follow
         print("Running git filter-branch in parallel on all source repos")
@@ -79,6 +100,6 @@ def main():
             run(f"git remote rm {target}")
         print(f"{target_dir}")
 
-    
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
