@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 git-filter-repo is directly taken from the upstream repo,
 commit d760d24cf74a0ee68134d4b83a43d1e8ea3b6e1c
@@ -21,26 +23,139 @@ from git_filter_repo import FilteringOptions, RepoFilter
 # TARGET_SUBDIR_NAME, ORIGINAL_REPO_URI, BRANCH_TO_BE_USED_FROM_ORIGINAL_REPO
 
 REPOS = [
-    ("metabox", "/home/kissiel/mono-repos/metabox", "main"),
-    ("checkbox-ng", "/home/kissiel/mono-repos/checkbox-ng", "master"),
+    (    
+        "metabox",
+        "https://git.launchpad.net/~checkbox-dev/checkbox/+git/metabox",
+        "main"
+    ),
+    (   
+        "checkbox-ng",
+        "https://git.launchpad.net/checkbox-ng",
+        "master"
+    ),
+    (
+        "checkbox-ng-packaging",
+        "https://git.launchpad.net/~checkbox-dev/checkbox-ng/+git/packaging",
+        "master",
+    ),
+    (
+        "checkbox-support-packaging",
+        "https://git.launchpad.net/~checkbox-dev/checkbox-support/+git/packaging",
+        "master",
+    ),
     (
         "checkbox-support",
-        "/home/kissiel/mono-repos/checkbox-support",
+        "https://git.launchpad.net/checkbox-support",
         "master",
     ),
     (
-        "plainbox-provider-checkbox",
-        "/home/kissiel/mono-repos/plainbox-provider-checkbox",
+        "providers/base-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-checkbox/+git/packaging",
         "master",
     ),
     (
-        "plainbox-provider-resource",
-        "/home/kissiel/mono-repos/plainbox-provider-resource",
+        "providers/base",
+        "https://git.launchpad.net/plainbox-provider-checkbox",
+        "master",
+    ),
+    (
+        "providers/resource-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-resource/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/resource",
+        "https://git.launchpad.net/plainbox-provider-resource",
+        "master",
+    ),
+    (
+        "providers/tpm2-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-tpm2/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/tpm2",
+        "https://git.launchpad.net/plainbox-provider-tpm2",
+        "master",
+    ),
+    (
+        "providers/ipdt-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-ipdt/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/ipdt",
+        "https://git.launchpad.net/plainbox-provider-ipdt",
+        "master",
+    ),
+    (
+        "providers/phoronix-packaging",
+        "https://git.launchpad.net/~checkbox-dev/checkbox-provider-phoronix/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/phoronix",
+        "https://git.launchpad.net/checkbox-provider-phoronix",
+        "master",
+    ),
+    (
+        "providers/gpgpu-packaging",
+        "https://git.launchpad.net/~checkbox-dev/checkbox-provider-gpgpu/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/gpgpu",
+        "https://git.launchpad.net/checkbox-provider-gpgpu",
+        "master",
+    ),
+    (
+        "providers/sru-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-sru/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/sru",
+        "https://git.launchpad.net/plainbox-provider-sru",
+        "master",
+    ),
+    (
+        "providers/certification-client-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-certification-client/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/certification-client",
+        "https://git.launchpad.net/plainbox-provider-certification-client",
+        "master",
+    ),
+    (
+        "providers/certification-server-packaging",
+        "https://git.launchpad.net/~checkbox-dev/plainbox-provider-certification-server/+git/packaging",
+        "master",
+    ),
+    (
+        "providers/certification-server",
+        "https://git.launchpad.net/plainbox-provider-certification-server",
+        "master",
+    ),
+    (
+        "providers/docker",
+        "https://git.launchpad.net/plainbox-provider-docker",
+        "master",
+    ),
+    (
+        "providers/iiotg",
+        "https://git.launchpad.net/checkbox-provider-iiotg",
+        "master",
+    ),
+    (
+        "providers/edgex",
+        "https://git.launchpad.net/checkbox-provider-edgex",
         "master",
     ),
 ]
 
-TARGET_REPO = "/home/kissiel/checkbox"
+TARGET_REPO = "/home/sylvain/monorepo-staging"
 
 run = partial(subprocess.run, shell=True)
 
@@ -52,8 +167,10 @@ def filter_branch_to_subdir(subdir, path):
         "--target",
         path,
         "--to-subdirectory-filter",
-        subdir,
+        subdir.replace("-packaging", ""),
     ]
+    if path.endswith('packaging'):
+        args.extend(["--path", "debian"])
     RepoFilter(FilteringOptions.parse_args(args)).run()
 
 
@@ -76,7 +193,7 @@ def main():
         for target, source, branch in REPOS:
             target_dir = os.path.join(tmp_dir, target)
             print(f"Cloning {source} into {target_dir}")
-            run(f"git clone {source} {target_dir}")
+            run(f"git clone -b {branch} {source} {target_dir}")
             print(f"Moving all of the files to their respective subdirs")
             # let's remember the target dir as an arg for the next parallel bit
             intermediate_dirs.append(
