@@ -11,6 +11,7 @@ import os
 import shutil
 import string
 import subprocess
+import sys
 import tempfile
 
 from functools import partial
@@ -176,14 +177,20 @@ def filter_branch_to_subdir(subdir, path):
 
 def main():
 
+    just_update = False
     if os.path.exists(TARGET_REPO):
-        raise SystemExit(f"{TARGET_REPO} already exists!")
+        if len(sys.argv) == 2 and sys.argv[1] == '--update':
+            just_update = True
+        else:
+            raise SystemExit(
+                f"{TARGET_REPO} already exists! Use --update to update")
 
     # TODO: assert that the config makes sense
 
-    # initiate the target repository
-    print(f"Creating target repository {TARGET_REPO}")
-    run(f"git init --initial-branch main {TARGET_REPO}")
+    if not just_update:
+        # initiate the target repository
+        print(f"Creating target repository {TARGET_REPO}")
+        run(f"git init --initial-branch main {TARGET_REPO}")
 
     # prepare temporary storages for the source repos
     # one tempdir is enough, all repos will be cloned as subdirs of the tmpdir
@@ -211,9 +218,19 @@ def main():
         for target, source, branch in REPOS:
             target_dir = os.path.join(tmp_dir, target)
             run(f"git remote add {target} {target_dir}")
-            run(f"git fetch {target}")
-            merge_opts = "--allow-unrelated-histories --no-edit"
-            run(f"git merge {merge_opts} {target}/{branch}")
+            if just_update:
+                pull_opts = '--no-tags --no-rebase --no-edit'
+                outcome = run(f"git pull {pull_opts} {target} {branch}",
+                    stdout=subprocess.PIPE)
+                output = outcome.stdout.decode(sys.stdout.encoding)
+                print(output)
+                if 'Already up to date.' not in output:
+                    # there was no merge, so the commit should not be amended
+                    run(f"git commit --amend -m 'monorepo refresh: pull of {source}'")
+            else:
+                run(f"git fetch {target}")
+                merge_opts = "--allow-unrelated-histories --no-edit"
+                run(f"git merge {merge_opts} {target}/{branch}")
             run(f"git remote rm {target}")
         print(f"{target_dir}")
 
